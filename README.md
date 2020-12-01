@@ -7,18 +7,18 @@ In this particular example we are deploying Amazon API Gateway, AWS StateMachine
 
 There are two workflows `sam-validate-build-test-deploy` and `sam-validate-build-test`.
 
-In this repository's current configuration, deployment only occurs when changes land into the `master` branch. This is seen within the `.github/workflows/sam-validate-build-test-deploy.yml` file:
+In this repository's current configuration, deployment only occurs when changes land into the `main` branch. This is seen within the `.github/workflows/sam-validate-build-test-deploy.yml` file:
 ```
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
 ```
 
 For all `other branches`, we will run the `sam-validate-build-test` workflow when pull requests are created. This ensures that the code they are looking to merge passes the `sam validate` and `sam build` steps.
 ```
 on:
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
 ```
 
 ## How To Configure
