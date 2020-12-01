@@ -1,0 +1,136 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: A bare bones example of deploying an API Gateway API with one Lambda using an OpenAPI 3.0.1 example spec file as in-line yaml.
+
+Parameters:
+
+  Name:
+    Type: String
+    Description: The name of the API to create, also used as the stack name.
+
+Resources:
+
+  Api:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: !Ref Name
+      StageName: live
+      OpenApiVersion: 3.0.1
+      DefinitionBody: 
+        openapi: 3.0.1
+        info:
+          title: Hello World API
+          description: This is a swagger example.
+          contact:
+            email: you@your-company.com
+          license:
+            name: Apache 2.0
+            url: http://www.apache.org/licenses/LICENSE-2.0.html
+          version: 1.0.0
+        paths:
+          /hello/world:
+            get:
+              summary: get hello world
+              description: |
+                Invokes hello world lambda function example.
+              responses:
+                "200":
+                  description: search results matching criteria
+                "400":
+                  description: bad input parameter
+              x-amazon-apigateway-integration:
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${AddLambdaFunction.Arn}/invocations
+                responses:
+                  default:
+                    statusCode: "200"
+                passthroughBehavior: when_no_match
+                httpMethod: POST
+                contentHandling: CONVERT_TO_TEXT
+                type: aws_proxy
+
+  AddLambdaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: add.lambda_handler
+      Runtime: python3.8
+      CodeUri: ./lambdas/add
+      Description: Add
+      AutoPublishAlias: live
+
+  CleanInputLambdaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: cleaninput.lambda_handler
+      Runtime: python3.8
+      CodeUri: ./lambdas/cleaninput
+      Description: Clean Input
+      AutoPublishAlias: live
+
+  DivideLambdaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: divide.lambda_handler
+      Runtime: python3.8
+      CodeUri: ./lambdas/divide
+      Description: Divide
+      AutoPublishAlias: live
+
+  MultiplyLambdaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: multiply.lambda_handler
+      Runtime: python3.8
+      CodeUri: ./lambdas/multiply
+      Description: Multiply
+      AutoPublishAlias: live
+
+  SubtractLambdaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: subtract.lambda_handler
+      Runtime: python3.8
+      CodeUri: ./lambdas/subtract
+      Description: Subtract
+      AutoPublishAlias: live
+
+  StateMachine:
+    Type: AWS::Serverless::StateMachine
+    Properties:
+      Name: !Sub statemachine-${AWS::StackName}
+      DefinitionUri: sm_def.yaml
+      DefinitionSubstitutions: 
+        AddLambdaFunction: !Ref AddLambdaFunction
+        CleanInputLambdaFunction: !Ref CleanInputLambdaFunction
+        DivideLambdaFunction: !Ref DivideLambdaFunction
+        MultiplyLambdaFunction: !Ref MultiplyLambdaFunction
+        SubtractLambdaFunction: !Ref SubtractLambdaFunction
+      Role: !GetAtt StateMachineRole.Arn
+
+  StateMachineRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub statemachine-role-${AWS::StackName}
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: states.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+
+  InvokeFunctionPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: !Sub statemachine-invoke-function-policy-${AWS::StackName}
+      Roles:
+        - !Ref StateMachineRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - lambda:InvokeFunction
+            Resource: '*'

@@ -1,17 +1,34 @@
-## My Project
+# GitHub Actions SAM Deployment Example
+The purpose of this repository is to illustrate a GitHub Actions pipeline deploying a SAM template.
 
-TODO: Fill this README out!
+In this particular example we are deploying Amazon API Gateway, AWS StateMachine, AWS Lambda Functions, and corresponding IAM Roles.
 
-Be sure to:
+## How it Works
 
-* Change the title in this README
-* Edit your repository description on GitHub
+There are two workflows `sam-validate-build-test-deploy` and `sam-validate-build-test`.
 
-## Security
+In this repository's current configuration, deployment only occurs when changes land into the `master` branch. This is seen within the `.github/workflows/sam-validate-build-test-deploy.yml` file:
+```
+on:
+  push:
+    branches: [ master ]
+```
 
-See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information.
+For all `other branches`, we will run the `sam-validate-build-test` workflow when pull requests are created. This ensures that the code they are looking to merge passes the `sam validate` and `sam build` steps.
+```
+on:
+  pull_request:
+    branches: [ master ]
+```
 
-## License
+## How To Configure
+* Fork this repo and update the code and SAM template to reflect the code you are looking to deploy.
+* Within the Repository settings for your fork or repo, create the following `Secrets` to configure the permissions to be used by the GitHub Actions pipeline:
+```
+AWS_ACCESS_KEY_ID
+AWS_SECRET_ACCESS_KEY
+AWS_SESSION_TOKEN
+AWS_REGION
+```
 
-This library is licensed under the MIT-0 License. See the LICENSE file.
-
+Please note the `AWS_SESSION_TOKEN` is optional, but preferable.

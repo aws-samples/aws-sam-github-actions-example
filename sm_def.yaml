@@ -1,0 +1,55 @@
+Comment: CalculationStateMachine
+StartAt: CleanInput
+States:
+    CleanInput:
+        Type: Task
+        Resource: 'arn:aws:states:::lambda:invoke'
+        Parameters:
+            FunctionName: ${CleanInputLambdaFunction}
+            Payload:
+                input.$: $
+        Next: Multiply
+    Multiply:
+        Type: Task
+        Resource: 'arn:aws:states:::lambda:invoke'
+        Parameters:
+            FunctionName: ${MultiplyLambdaFunction}
+            Payload:
+                input.$: $.Payload
+        Next: Choice
+    Choice:
+        Type: Choice
+        Choices:
+            - 
+                Variable: $.Payload.result
+                NumericGreaterThanEquals: 20
+                Next: Subtract
+        Default: Fail
+    Subtract:
+        Type: Task
+        Resource: 'arn:aws:states:::lambda:invoke'
+        Parameters:
+            FunctionName: ${SubtractLambdaFunction}
+            Payload:
+                input.$: $.Payload
+        Next: Add
+    Fail:
+        Type: Fail
+        Cause: Number Too Small
+        Error: NumberTooSmallError
+    Add:
+        Type: Task
+        Resource: 'arn:aws:states:::lambda:invoke'
+        Parameters:
+            FunctionName: ${AddLambdaFunction}
+            Payload:
+                input.$: $.Payload
+        Next: Divide
+    Divide:
+        Type: Task
+        Resource: 'arn:aws:states:::lambda:invoke'
+        Parameters:
+            FunctionName: ${DivideLambdaFunction}
+            Payload:
+                input.$: $.Payload
+        End: true

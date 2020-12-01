@@ -1,0 +1,70 @@
+name: SAM Validate, Build, Test, Deploy
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  sam-validate-build-test-deploy:
+    runs-on: ubuntu-latest
+    outputs:
+      env-name: ${{ steps.env-name.outputs.environment }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install Dependencies with Apt Get
+        run: |
+          sudo apt-get update
+          sudo apt-get install python3.8 jq -y
+      - name: Install Pip Dependencies for CI
+        run: |
+          pip3 install pytest
+      - name: Configure AWS credentials
+        id: creds
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          # aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+      - name: SAM Validate
+        run: |
+          sam validate
+      - name: Configure variables
+        shell: bash
+        id: vars
+        env:
+          REPO: ${{ github.repository }}
+          HASH: ${{ github.sha }}
+          REF: ${{ github.ref }}
+        run: |
+          # Set variables
+          BRANCH=${REF#refs/heads/}
+          REPOSITORY=`echo $REPO | tr "/" "-"`
+          ENVIRONMENT=$BRANCH-$REPOSITORY-${{ secrets.AWS_REGION }}
+          # In this step we are setting variables and persistenting them
+          # into the environment so that they can be utilized in other steps
+          echo "::set-output name=branch::$BRANCH"
+          echo "::set-output name=repository::$REPOSITORY"
+          echo "::set-output name=environment::$ENVIRONMENT"
+          # Output variables to ensure their values are set correctly when ran
+          echo "The region is ${{ secrets.AWS_REGION }}"
+          echo "The repository is $REPOSITORY"
+          echo "The environment is $ENVIRONMENT"
+          echo "The branch is $BRANCH"
+      - name: SAM Build
+        run: |
+          sam build
+      - name: Run unit tests
+        run: |
+          python3 -m pytest -s -vvv ./tests/unit/
+      - name: SAM Deploy
+        run: |
+          # Create S3 Bucket to store code
+          aws s3 mb s3://${{ steps.vars.outputs.environment }}
+          # Run SAM Deploy
+          sam deploy --template-file .aws-sam/build/template.yaml \
+            --stack-name ${{ steps.vars.outputs.environment }} \
+            --s3-bucket ${{ steps.vars.outputs.environment }} \
+            --parameter-overrides \
+              'ParameterKey=Name,ParameterValue=example \
+              ParameterKey=Version,ParameterValue=${{ steps.vars.outputs.version }}' \
+            --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM

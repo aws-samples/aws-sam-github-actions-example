@@ -1,0 +1,57 @@
+name: SAM Validate, Build, Test
+on:
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  sam-validate-build-test:
+    runs-on: ubuntu-latest
+    outputs:
+      env-name: ${{ steps.env-name.outputs.environment }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install Dependencies with Apt Get
+        run: |
+          sudo apt-get update
+          sudo apt-get install python3.8 jq -y
+      - name: Install Pip Dependencies
+        run: |
+          pip3 install pytest
+      - name: Configure AWS credentials
+        id: creds
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          # aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ secrets.AWS_REGION }}
+      - name: SAM Validate
+        run: |
+          sam validate
+      - name: Configure variables
+        shell: bash
+        id: vars
+        env:
+          REPO: ${{ github.repository }}
+          HASH: ${{ github.sha }}
+          REF: ${{ github.ref }}
+        run: |
+          # In this step we are setting variables and persistenting them
+          # into the environment so that they can be utilized in other steps
+          BRANCH=${REF#refs/heads/}
+          REGION=$(cat ./config.json | jq -r .region)
+          ENVIRONMENT=`echo $REPO | tr "/" "-"`
+          BUCKET_NAME=$BRANCH-$ENVIRONMENT
+          echo "::set-output name=environment::$ENVIRONMENT"
+          echo "::set-output name=region::$REGION"
+          echo "::set-output name=bucket_name::$BUCKET_NAME"
+          echo "The environment is $ENVIRONMENT"
+          echo "The region is $REGION"
+          echo "The bucket_name is $BUCKET_NAME"
+          echo "The branch is $BRANCH"
+      - name: SAM Build
+        run: |
+          sam build
+      - name: Run unit tests
+        run: |
+          python3 -m pytest -s -vvv ./tests/unit/
