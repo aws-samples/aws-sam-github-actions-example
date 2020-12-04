@@ -1,7 +1,7 @@
 name: SAM Validate, Build, Test
 on:
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
 
 jobs:
   sam-validate-build-test:
