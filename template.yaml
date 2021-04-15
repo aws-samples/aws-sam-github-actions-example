@@ -97,7 +97,7 @@ Resources:
   StateMachine:
     Type: AWS::Serverless::StateMachine
     Properties:
-      Name: !Sub statemachine-${AWS::StackName}
+      Name: !Sub statemachine-lambda-test
       DefinitionUri: sm_def.yaml
       DefinitionSubstitutions: 
         AddLambdaFunction: !Ref AddLambdaFunction
