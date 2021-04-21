@@ -6,5 +6,5 @@ print('Loading function')
 
 
 def lambda_handler(event, context):
-    print("Hello World" + event)
+    print("Hello World!!!" + event)
     return event['key1']
