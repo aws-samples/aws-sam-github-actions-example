@@ -2,7 +2,7 @@ name: SAM Validate, Build, Test
 on:
   pull_request:
     branches: [ main ]
-    workflow_dispatch:
+    workflow_dispatch: #test
 
 jobs:
   sam-validate-build-test:
