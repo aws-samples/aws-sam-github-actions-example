@@ -62,11 +62,11 @@ jobs:
           aws s3api head-bucket --bucket "${{ steps.vars.outputs.environment }}" 2>/dev/null \
             || aws s3 mb s3://${{ steps.vars.outputs.environment }}
           # Run SAM Deploy
-      sam deploy --template-file .aws-sam/build/template.yaml \
-        --stack-name ${{ steps.vars.outputs.environment }} \
-        --s3-bucket ${{ steps.vars.outputs.environment }} \
-        --parameter-overrides \
-          'ParameterKey=Name,ParameterValue=example \
-          ParameterKey=Version,ParameterValue=${{ steps.vars.outputs.version }}' \
-        --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
-        || echo "Nothing to deploy, no changes"
+          sam deploy --template-file .aws-sam/build/template.yaml \
+            --stack-name ${{ steps.vars.outputs.environment }} \
+            --s3-bucket ${{ steps.vars.outputs.environment }} \
+            --parameter-overrides \
+              'ParameterKey=Name,ParameterValue=example \
+              ParameterKey=Version,ParameterValue=${{ steps.vars.outputs.version }}' \
+            --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
+            || echo "Nothing to deploy, no changes"
