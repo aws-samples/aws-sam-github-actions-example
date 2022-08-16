@@ -22,6 +22,8 @@ def lambda_handler(event, context):
        "third": third,
        "result": int(result)
    }
+
+   print("hello")
    
    event['input'] = response
    
