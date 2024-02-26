@@ -42,9 +42,9 @@ jobs:
           ENVIRONMENT=$BRANCH-$REPOSITORY-${{ secrets.AWS_REGION }}
           # In this step we are setting variables and persistenting them
           # into the environment so that they can be utilized in other steps
-          echo "::set-output name=branch::$BRANCH"
-          echo "::set-output name=repository::$REPOSITORY"
-          echo "::set-output name=environment::$ENVIRONMENT"
+          echo "branch=$BRANCH" >> "$GITHUB_OUTPUT"
+          echo "repository=$REPOSITORY" >> "$GITHUB_OUTPUT"
+          echo "environment=$ENVIRONMENT" >> "$GITHUB_OUTPUT"
           # Output variables to ensure their values are set correctly when ran
           echo "The region is ${{ secrets.AWS_REGION }}"
           echo "The repository is $REPOSITORY"
