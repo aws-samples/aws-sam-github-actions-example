@@ -42,9 +42,9 @@ jobs:
           REGION=$(cat ./config.json | jq -r .region)
           ENVIRONMENT=`echo $REPO | tr "/" "-"`
           BUCKET_NAME=$BRANCH-$ENVIRONMENT
-          echo "::set-output name=environment::$ENVIRONMENT"
-          echo "::set-output name=region::$REGION"
-          echo "::set-output name=bucket_name::$BUCKET_NAME"
+          echo "environment=$ENVIRONMENT" >> "$GITHUB_OUTPUT"
+          echo "region=$REGION" >> "$GITHUB_OUTPUT"
+          echo "bucket_name=$BUCKET_NAME" >> "$GITHUB_OUTPUT"
           echo "The environment is $ENVIRONMENT"
           echo "The region is $REGION"
           echo "The bucket_name is $BUCKET_NAME"
